@@ -20,8 +20,12 @@ def get_wire_lines(wire_path):
     horizontal = []
     vertical = []
 
+    # Measures how long the wire is until this turn.
+    length_so_far = 0
+
     for dir_num in wire_path:
         dir = dir_num[0]
+        # Measures the distance of this particular line segment
         distance = int(dir_num[1:])
         end_x = start_x
         end_y = start_y
@@ -35,7 +39,7 @@ def get_wire_lines(wire_path):
         elif dir == 'R':
             end_x += distance
 
-        line = tuple([start_x, start_y, end_x, end_y])
+        line = tuple([start_x, start_y, end_x, end_y, distance, length_so_far])
 
         if end_x == start_x:
             # Vertical line
@@ -47,6 +51,8 @@ def get_wire_lines(wire_path):
         # Update the start point for the next line segment
         start_x = end_x
         start_y = end_y
+
+        length_so_far += distance
 
     return horizontal, vertical
 
@@ -63,6 +69,9 @@ def get_intersection_point(line_1, line_2):
     """
     x = 0
     y = 0
+    length_of_wire_1 = 0
+    length_of_wire_2 = 0
+
     if line_1[0] == line_1[2] and line_2[0] == line_2[2]:
         # Two vertical lines won't intersect
         return tuple([x, y])
@@ -81,20 +90,35 @@ def get_intersection_point(line_1, line_2):
         x = line_1[0]
         y = line_2[1]
 
+        # Initialize the length of wire 1 and wire 2 to the length of wires
+        # seen until this line segment (length_so_far).
+        length_of_wire_1 = line_1[5]
+        length_of_wire_2 = line_2[5]
+
+        # Since line 1 is vertical, we find the difference in the y co-ordinate
+        # from its starting point (where the wire makes the turn) to the
+        # intersection point.
+        length_of_wire_1 += abs(line_1[1] - y)
+
+        # Since line 2 is horizontal, we find the difference in the x
+        # co-ordinate from its starting point (where the wire makes the turn) to
+        # the intersection point.
+        length_of_wire_2 += abs(line_2[0] - x)
+
         line_2_min_x = min(line_2[0], line_2[2])
         line_2_max_x = max(line_2[0], line_2[2])
         if not line_2_min_x < x < line_2_max_x:
             # No intersection
-            return tuple([0, 0])
+            return tuple([0, 0, 0, 0])
 
         line_1_min_y = min(line_1[1], line_1[3])
         line_1_max_y = max(line_1[1], line_1[3])
 
         if not line_1_min_y < y < line_1_max_y:
             # No intersection
-            return tuple([0, 0])
+            return tuple([0, 0, 0, 0])
 
-    return tuple([x, y])
+    return tuple([x, y, length_of_wire_1, length_of_wire_2])
 
 
 def main():
@@ -105,7 +129,7 @@ def main():
     wire_a = wires[0].split(',')
     wire_b = wires[1].split(',')
 
-    central_port = tuple([0, 0])
+    central_port = tuple([0, 0, 0, 0])
 
     # Get the line segments for the two wires
     a_horizontal, a_vertical = get_wire_lines(wire_a)
@@ -128,8 +152,11 @@ def main():
 
     # Print the manhattan distances of the intersection points from the central
     # port as a sorted list
-    manhattan_distances = sorted([x + y for x, y in intersection_points])
+    manhattan_distances = sorted([x + y for x, y, _, _ in intersection_points])
     print(manhattan_distances)
+    wire_lengths = sorted([l_wire_1 + l_wire_2 for _, _, l_wire_1, l_wire_2
+                           in intersection_points])
+    print(wire_lengths)
 
 
 if __name__ == '__main__':
