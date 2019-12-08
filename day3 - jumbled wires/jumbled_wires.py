@@ -2,8 +2,10 @@
 Reads the provided input of the wire paths to find the closest intersecting
 point of the two wires.
 We first generate two lists of line segments for each wire
-(horizontal and vertical). Then we find if there are any intersecting lines
+(horizontal and vertical).
+First chanllenge: Then we find if there are any intersecting lines
 between the two wires, and get the closest point to (0, 0) where they intersect.
+Second challenge: Find the closest intersection point in terms of wire lengths.
 """
 
 
