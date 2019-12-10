@@ -12,6 +12,15 @@ There are three types of instructions:
     value and store it at address 50.
 4 - Outputs the value of its only parameter. For example, the instruction 4,50
     would output the value at address 50.
+5 - jump-if-true: if the first parameter is non-zero, it sets the instruction
+    pointer to the value from the second parameter. Otherwise, it does nothing.
+6 - jump-if-false: if the first parameter is zero, it sets the instruction
+    pointer to the value from the second parameter. Otherwise, it does nothing.
+7 - less than: if the first parameter is less than the second parameter, it
+    stores 1 in the position given by the third parameter.
+    Otherwise, it stores 0.
+8 - equals: if the first parameter is equal to the second parameter, it stores
+    1 in the position given by the third parameter. Otherwise, it stores 0.
 99 - Program ends immediately
 
 Also, we need to support "parameter modes" - position(0) and value(1)
@@ -54,6 +63,12 @@ def operate(instruction, v1, v2):
     elif instruction == 2:
         return v1 * v2
 
+    elif instruction == 7:
+        return 1 if v1 < v2 else 0
+
+    elif instruction == 8:
+        return 1 if v1 == v2 else 0
+
 
 def get_value(mode, memory, pointer):
     """
@@ -78,16 +93,14 @@ def run_program(memory):
     while instruction_pointer < len(memory):
         opcode = memory[instruction_pointer]
         instruction = opcode % 100
+        param_mode_1 = int(opcode / 100) % 10
+        param_mode_2 = int(opcode / 1000) % 10
+        param_mode_3 = int(opcode / 10000) % 10
 
         if instruction == 99:
             break
 
-        if instruction in [1, 2]:
-
-            param_mode_1 = int(opcode / 100) % 10
-            param_mode_2 = int(opcode / 1000) % 10
-            param_mode_3 = int(opcode / 10000) % 10
-
+        elif instruction in [1, 2, 7, 8]:
             v1 = get_value(param_mode_1, memory, instruction_pointer + 1)
             v2 = get_value(param_mode_2, memory, instruction_pointer + 2)
             v3 = operate(instruction, v1, v2)
@@ -97,19 +110,32 @@ def run_program(memory):
                 memory[address] = v3
 
             instruction_pointer += 4
-            continue
 
-        if instruction == 3:
+        elif instruction == 3:
             address = memory[instruction_pointer + 1]
             memory[address] = int(input("Enter input: "))
             instruction_pointer += 2
-            continue
 
-        if instruction == 4:
+        elif instruction == 4:
             address = memory[instruction_pointer + 1]
             print(memory[address])
             instruction_pointer += 2
-            continue
+
+        elif instruction == 5:
+            v1 = get_value(param_mode_1, memory, instruction_pointer + 1)
+            v2 = get_value(param_mode_2, memory, instruction_pointer + 2)
+            if v1 != 0:
+                instruction_pointer = v2
+            else:
+                instruction_pointer += 3
+
+        elif instruction == 6:
+            v1 = get_value(param_mode_1, memory, instruction_pointer + 1)
+            v2 = get_value(param_mode_2, memory, instruction_pointer + 2)
+            if v1 == 0:
+                instruction_pointer = v2
+            else:
+                instruction_pointer += 3
 
 
 sys.exit(run_program(input_code))
